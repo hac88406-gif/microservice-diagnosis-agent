@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================
+     tool-service（工具服务，端口 8090）
+     ============================================================
+     职责：把「被诊断环境」的原始信号加工成「给模型看的工具结果」——
+           统一响应外层 {code,data,traceId,costMs}、
+           统一错误 {code,message,retryable,hint}、
+           结果裁剪（TopN / 字段白名单 / 不含 IP 与密码）。
+     当前实现 get_service_health（服务与实例健康）与 get_api_metrics（接口指标），
+     日志检索 / 慢 SQL / 配置 / 链路详情等工具按需继续补充。
+     说明：
+       1. 独立 Maven 工程（不加入 demo-services 父子工程）：
+          工具服务是「诊断侧」组件，与被诊断服务刻意解耦，
+          两者之间只有 HTTP 契约，没有代码依赖
+       2. 显式声明 UTF-8：本机 Maven 平台编码为 GBK，避免中文乱码
+     ============================================================ -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.demo</groupId>
+    <artifactId>tool-service</artifactId>
+    <version>1.0.0</version>
+    <name>tool-service</name>
+    <description>诊断工具服务：服务健康与接口指标（只读）</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- 直连 MySQL 做中间件连通性复核 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <!-- 直连 Redis 做中间件连通性复核 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

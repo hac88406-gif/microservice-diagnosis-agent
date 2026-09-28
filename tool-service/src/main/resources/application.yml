@@ -1,0 +1,64 @@
+# ============================================================
+# tool-service 配置（端口 8090）
+# 约定：MySQL 3306（demo/demo123，库 demo）、Redis 6379（仅做连通性复核）
+# ============================================================
+server:
+  port: 8090
+
+spring:
+  application:
+    name: tool-service
+
+  # 工具服务直连 MySQL/Redis，只为「中间件连通性」复核（SELECT 1 / PING）
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: demo
+    password: demo123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      pool-name: tool-hikari
+      maximum-pool-size: 5
+      connection-timeout: 2000
+      # 关键：被诊断环境的数据库故障时，工具服务必须仍能启动——
+      # 否则"报告故障"的工具本身先挂了，诊断无从谈起
+      initialization-fail-timeout: -1
+
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      timeout: 1000ms
+      connect-timeout: 1000ms
+
+# ============================================================
+# 服务注册表 + 工具调用参数
+# 说明：当前把被诊断服务实例写在配置里（结构支持多实例）；
+#       后续可替换为 Nacos 等注册中心，接口结构不变
+# ============================================================
+demo:
+  registry:
+    services:
+      - name: order-service
+        instances:
+          - id: order-1
+            base-url: http://127.0.0.1:8081
+      - name: inventory-service
+        instances:
+          - id: inventory-1
+            base-url: http://127.0.0.1:8082
+
+  http:
+    # 调用被诊断服务的超时必须显式设置，防止工具被"假死实例"拖死
+    connect-timeout-ms: 500
+    read-timeout-ms: 1500
+
+  tool:
+    # 单个工具调用的总预算：超出后剩余实例标记 TOTAL_TIMEOUT
+    total-timeout-ms: 5000
+
+logging:
+  pattern:
+    # %X{traceId}：把链路 ID 打进每行日志，便于按 traceId 串联一次工具调用
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{traceId:-}] %logger{36} - %msg%n"
+  level:
+    com.demo: INFO
