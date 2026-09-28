@@ -1,0 +1,60 @@
+# ============================================================
+# 微服务智能诊断 Agent · 被诊断环境基础设施
+# ------------------------------------------------------------
+# 一条命令启动：
+#   docker compose up -d
+# 包含：
+#   - MySQL 8：业务库 demo（orders / inventory 表 + 种子数据，由 infra/mysql/init.sql 首次启动时初始化）
+#   - Redis 7：order-service 的订单缓存
+# 端口与全项目约定一致：MySQL 3306、Redis 6379
+# 说明：init.sql 只在容器「数据卷为空」的首次启动时执行；
+#       如需重新初始化：docker compose down -v && docker compose up -d
+# ============================================================
+
+services:
+  # ---------------- MySQL 8 ----------------
+  mysql:
+    image: mysql:8.0
+    container_name: demo-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123      # 仅容器内使用，业务账号用 demo/demo123
+      MYSQL_DATABASE: demo              # 启动时自动创建业务库 demo
+      MYSQL_USER: demo                  # 业务账号（被诊断服务使用）
+      MYSQL_PASSWORD: demo123
+      TZ: Asia/Shanghai                 # 容器时区，保证 NOW() 与业务时间一致
+    command:
+      # 服务端统一 utf8mb4，避免中文商品名/日志乱码
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+      - --max-connections=200           # 为压测与故障演练预留连接余量
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 初始化脚本：建 orders / inventory 表 + 种子数据（仅首次启动生效）
+      - ./infra/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u demo -pdemo123 --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # ---------------- Redis 7 ----------------
+  redis:
+    image: redis:7-alpine
+    container_name: demo-redis
+    restart: unless-stopped
+    # 演示环境不需要持久化，关闭 AOF 降低噪音
+    command: ["redis-server", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  mysql-data:
