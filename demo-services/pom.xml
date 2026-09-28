@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================
+     被诊断环境 · Maven 父工程
+     ============================================================
+     结构：demo-services（父，pom）/ demo-common（公共能力）
+           / order-service（订单服务 8081）/ inventory-service（库存服务 8082）
+     说明：
+       1. 继承 spring-boot-starter-parent，统一依赖版本与插件配置
+       2. 显式声明 UTF-8：本机 Maven 平台编码为 GBK，不声明会导致中文注释/日志乱码
+     ============================================================ -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+        <relativePath/> <!-- 从仓库解析父 POM，不使用相对路径 -->
+    </parent>
+
+    <groupId>com.demo</groupId>
+    <artifactId>demo-services</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>demo-services</name>
+    <description>被诊断的最小业务服务集合（order / inventory）</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <!-- 平台 Maven 默认编码为 GBK：显式声明 UTF-8，避免中文注释/日志乱码 -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+
+    <modules>
+        <module>demo-common</module>
+        <module>order-service</module>
+        <module>inventory-service</module>
+    </modules>
+</project>

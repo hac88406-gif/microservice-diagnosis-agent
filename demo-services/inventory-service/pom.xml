@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================
+     inventory-service（库存服务，端口 8082）
+     ============================================================
+     职责：提供库存查询与扣减接口（真实读写 MySQL），
+           order-service 创建订单时通过 HTTP 调用本服务的扣减接口，
+           构成「订单 → 库存」真实跨服务链路
+     说明：本服务不使用 Redis，因此不引入 data-redis starter；
+           健康检查中的 Redis 探测由 ObjectProvider 自动跳过
+     ============================================================ -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.demo</groupId>
+        <artifactId>demo-services</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>inventory-service</artifactId>
+    <name>inventory-service</name>
+    <description>库存服务：MySQL 库存查询与扣减</description>
+
+    <dependencies>
+        <!-- 公共能力：/internal/health、/internal/metrics、/internal/fault -->
+        <dependency>
+            <groupId>com.demo</groupId>
+            <artifactId>demo-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- 打成可执行 fat jar，启动方式见 README / 自测记录 -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

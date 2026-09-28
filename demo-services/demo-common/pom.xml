@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ============================================================
+     demo-common：两个最小业务服务共享的「可观测 + 故障注入」能力
+     ============================================================
+     提供（均为 /internal/** 端点，不进入业务 metrics 统计）：
+       - GET  /internal/health   ：实例健康 JSON（含 MySQL/Redis 依赖探测）
+       - GET  /internal/metrics  ：每接口计数/错误数/时延样本（供指标工具汇总）
+       - POST /internal/fault    ：注入故障（latency / exception，支持 pathRegex + percent）
+       - GET  /internal/fault    ：查询当前故障
+       - DELETE /internal/fault  ：清除故障
+     说明：本模块为库（不打可执行 jar），由 order-service / inventory-service 依赖引入
+     ============================================================ -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.demo</groupId>
+        <artifactId>demo-services</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>demo-common</artifactId>
+    <name>demo-common</name>
+    <description>业务服务共享能力：指标采集 / 故障注入 / 健康与依赖探测</description>
+
+    <dependencies>
+        <!-- Web：提供 Filter / RestController 能力 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!-- JDBC：健康检查用 JdbcTemplate 探测 MySQL 连通性 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <!-- Redis：健康检查探测 Redis 连通性。
+             scope=provided 是刻意设计：本模块只编解码 Redis API，不强制传播 starter——
+             真正使用 Redis 的服务（order-service）自己声明 starter，
+             不使用 Redis 的服务（inventory-service）则不引入，
+             DependencyHealthChecker 用 ObjectProvider 自动"跳过"缺失的依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

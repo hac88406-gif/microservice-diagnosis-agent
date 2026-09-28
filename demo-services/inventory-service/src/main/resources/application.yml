@@ -1,0 +1,38 @@
+# ============================================================
+# inventory-service 配置（端口 8082）
+# 约定：MySQL 3306（demo/demo123，库 demo）
+# 说明：本服务不使用 Redis，因此不引入 data-redis；
+#       健康检查会自动跳过 Redis 探测（ObjectProvider 按需取 Bean）
+# ============================================================
+server:
+  port: 8082
+
+spring:
+  application:
+    name: inventory-service
+
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: demo
+    password: demo123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      pool-name: inventory-hikari
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 3000
+      validation-timeout: 2000
+      # 允许启动时数据库暂不可用（被诊断环境本身可能在故障中）
+      initialization-fail-timeout: -1
+
+  jackson:
+    time-zone: Asia/Shanghai
+
+# ---------------- 业务配置 ----------------
+demo:
+  # 实例 ID：健康工具汇总实例健康时展示（多实例部署时可配 inventory-2 ...）
+  instance-id: inventory-1
+
+logging:
+  level:
+    com.demo: INFO

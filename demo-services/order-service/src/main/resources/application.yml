@@ -1,0 +1,53 @@
+# ============================================================
+# order-service 配置（端口 8081）
+# 约定：MySQL 3306（demo/demo123，库 demo）、Redis 6379
+# ============================================================
+server:
+  port: 8081
+
+spring:
+  application:
+    name: order-service
+
+  # ---------------- MySQL ----------------
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/demo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: demo
+    password: demo123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      pool-name: order-hikari
+      # 连接池参数是压测与故障演练的调节旋钮（调小 / 制造等待）
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 3000
+      validation-timeout: 2000
+      # 允许启动时数据库暂不可用（被诊断环境本身可能在故障中）
+      initialization-fail-timeout: -1
+
+  # ---------------- Redis（订单缓存） ----------------
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      timeout: 1000ms
+      connect-timeout: 1000ms
+
+  jackson:
+    time-zone: Asia/Shanghai
+
+# ---------------- 业务配置 ----------------
+demo:
+  # 实例 ID：健康工具汇总实例健康时展示（多实例部署时可配 order-2 ...）
+  instance-id: order-1
+  # 订单缓存 TTL（秒）：可通过调小 TTL 观察缓存命中率变化
+  order-cache-ttl-seconds: 60
+  # 库存服务调用配置：读超时 1.5s 小于下游 3s 注入延迟，保证超时故障真实发生
+  inventory:
+    base-url: http://127.0.0.1:8082
+    connect-timeout-ms: 500
+    read-timeout-ms: 1500
+
+logging:
+  level:
+    com.demo: INFO
